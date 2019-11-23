@@ -43,20 +43,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         auth.userDetailsService(userDetailService).passwordEncoder(new BCryptPasswordEncoder());
     }
 
-    /*  @Bean
-        @Override
-        protected UserDetailsService userDetailsService() {
-            BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-
-            String finalPassword = "{bcrypt}" + bCryptPasswordEncoder.encode("123456");
-
-            InMemoryUserDetailsManager userDetailsManager = new InMemoryUserDetailsManager();
-            userDetailsManager.createUser(User.withUsername("user_1").password(finalPassword).authorities("USER").build());
-            userDetailsManager.createUser(User.withUsername("user_2").password(finalPassword).authorities("USER").build());
-
-            return userDetailsManager;
-        }
-    */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.requestMatchers()

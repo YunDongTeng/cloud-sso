@@ -44,20 +44,16 @@ public class UserController {
     public String callback(@RequestParam("code") String code) {
         System.out.println("授权码：" + code);
 
-        MultiValueMap<String, String> param = new LinkedMultiValueMap<>();
+        Map<String, String> param = new HashMap<>();
 
-        param.add("client_id", "client_1");
-        param.add("client_secret", "123456");
-        param.add("grant_type", "authorization_code");
-        param.add("scope", "all");
-        param.add("code", code);
-        param.add("redirectUri", "http://127.0.0.1:8081/user/callback");
+        param.put("client_id", clientId);
+        param.put("client_secret", clientSecret);
+        param.put("grant_type", grantType);
+        param.put("code", code);
+        param.put("redirect_uri", redirectUri);
 
-
-        Object result = RestTemplateUtil.postForm(tokenUrl, param);
-
+        Object result = HttpClientUtil.doPost(tokenUrl, param);
         return JSON.toJSONString(result);
     }
-
 
 }

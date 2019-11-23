@@ -1,158 +1,136 @@
 package com.fousng.user.util;
 
-
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
-import org.apache.http.util.ExceptionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
-
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+/**
+ * Created by Administrator on 2018/4/27.
+ */
 public class HttpClientUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(HttpClientUtil.class);
+    public static String doGet(String url, Map<String, String> param) {
 
-    /**
-     * @Title: doGet
-     * @Description: get方式
-     * @author Mundo
-     */
-    public static String doGet(String url, Map<String, String> params) {
+        // 创建Httpclient对象
+        CloseableHttpClient httpclient = HttpClients.createDefault();
 
-        // 返回结果
-        String result = "";
-        // 创建HttpClient对象
-        HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpGet httpGet = null;
+        String resultString = "";
+        CloseableHttpResponse response = null;
         try {
-            // 拼接参数,可以用URIBuilder,也可以直接拼接在？传值，拼在url后面，如下--httpGet = new
-            // HttpGet(uri+"?id=123");
-            URIBuilder uriBuilder = new URIBuilder(url);
-            if (null != params && !params.isEmpty()) {
-                for (Map.Entry<String, String> entry : params.entrySet()) {
-                    uriBuilder.addParameter(entry.getKey(), entry.getValue());
-                    // 或者用
-                    // 顺便说一下不同(setParameter会覆盖同名参数的值，addParameter则不会)
-                    // uriBuilder.setParameter(entry.getKey(), entry.getValue());
+            // 创建uri
+            URIBuilder builder = new URIBuilder(url);
+            if (param != null) {
+                for (String key : param.keySet()) {
+                    builder.addParameter(key, param.get(key));
                 }
             }
-            URI uri = uriBuilder.build();
-            // 创建get请求
-            httpGet = new HttpGet(uri);
-            logger.info("访问路径：" + uri);
-            HttpResponse response = httpClient.execute(httpGet);
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {// 返回200，请求成功
-                // 结果返回
-                result = EntityUtils.toString(response.getEntity());
-                logger.info("请求成功！，返回数据：" + result);
-            } else {
-                logger.info("请求失败！");
-            }
-        } catch (Exception e) {
-            logger.info("请求失败!");
-           // logger.error(ExceptionUtils.getStackTrace(e));
-        } finally {
-            // 释放连接
-            if (null != httpGet) {
-                httpGet.releaseConnection();
-            }
-        }
-        return result;
-    }
+            URI uri = builder.build();
 
-    /**
-     * @Title: doPost
-     * @Description: post请求
-     * @param url
-     * @param params
-     * @return
-     * @author Mundo
-     */
-    public static String doPost(String url, Map<String, String> params) {
-        String result = "";
-        // 创建httpclient对象
-        HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpPost httpPost = new HttpPost(url);
-        try { // 参数键值对
-            if (null != params && !params.isEmpty()) {
-                List<NameValuePair> pairs = new ArrayList<NameValuePair>();
-                NameValuePair pair = null;
-                for (String key : params.keySet()) {
-                    pair = new BasicNameValuePair(key, params.get(key));
-                    pairs.add(pair);
-                }
-                // 模拟表单
-                UrlEncodedFormEntity entity = new UrlEncodedFormEntity(pairs);
-                httpPost.setEntity(entity);
-            }
-            HttpResponse response = httpClient.execute(httpPost);
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                result = EntityUtils.toString(response.getEntity(), "utf-8");
-                logger.info("返回数据：>>>" + result);
-            } else {
-                logger.info("请求失败！，url:" + url);
+            // 创建http GET请求
+            HttpGet httpGet = new HttpGet(uri);
+
+            // 执行请求
+            response = httpclient.execute(httpGet);
+            // 判断返回状态是否为200
+            if (response.getStatusLine().getStatusCode() == 200) {
+                resultString = EntityUtils.toString(response.getEntity(), "UTF-8");
             }
         } catch (Exception e) {
-            logger.error("请求失败");
-          //  logger.error(ExceptionUtils.getStackTrace(e));
             e.printStackTrace();
         } finally {
-            if (null != httpPost) {
-                // 释放连接
-                httpPost.releaseConnection();
+            try {
+                if (response != null) {
+                    response.close();
+                }
+                httpclient.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
-        return result;
+        return resultString;
     }
 
-    /**
-     * @Title: sendJsonStr
-     * @Description: post发送json字符串
-     * @param url
-     * @param params
-     * @return 返回数据
-     * @author Mundo
-     */
-    public static String sendJsonStr(String url, String params) {
-        String result = "";
+    public static String doGet(String url) {
+        return doGet(url, null);
+    }
 
-        HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpPost httpPost = new HttpPost(url);
+    public static String doPost(String url, Map<String, String> param) {
+        // 创建Httpclient对象
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse response = null;
+        String resultString = "";
         try {
-            httpPost.addHeader("Content-type", "application/json; charset=utf-8");
-            httpPost.setHeader("Accept", "application/json");
-            if (!StringUtils.isEmpty(params)) {
-                httpPost.setEntity(new StringEntity(params, Charset.forName("UTF-8")));
+            // 创建Http Post请求
+            HttpPost httpPost = new HttpPost(url);
+            // 创建参数列表
+            if (param != null) {
+                List<NameValuePair> paramList = new ArrayList<>();
+                for (String key : param.keySet()) {
+                    paramList.add(new BasicNameValuePair(key, param.get(key)));
+                }
+                // 模拟表单
+                UrlEncodedFormEntity entity = new UrlEncodedFormEntity(paramList,"utf-8");
+                httpPost.setEntity(entity);
             }
-            HttpResponse response = httpClient.execute(httpPost);
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                result = EntityUtils.toString(response.getEntity());
-                logger.info("返回数据：" + result);
-            } else {
-                logger.info("请求失败");
+            // 执行http请求
+            response = httpClient.execute(httpPost);
+            resultString = EntityUtils.toString(response.getEntity(), "utf-8");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                response.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            logger.error("请求异常");
-           // logger.error(ExceptionUtils.getStackTrace(e));
         }
-        return result;
+
+        return resultString;
     }
 
+    public static String doPost(String url) {
+        return doPost(url, null);
+    }
+
+    public static String doPostJson(String url, String json) {
+        // 创建Httpclient对象
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse response = null;
+        String resultString = "";
+        try {
+            // 创建Http Post请求
+            HttpPost httpPost = new HttpPost(url);
+            // 创建请求内容
+            StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
+            httpPost.setEntity(entity);
+            // 执行http请求
+            response = httpClient.execute(httpPost);
+            resultString = EntityUtils.toString(response.getEntity(), "utf-8");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                response.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        return resultString;
+    }
 }
