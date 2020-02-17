@@ -1,6 +1,7 @@
 package com.fosung.demo.config;
 
 import com.fosung.demo.constant.SsoConstant;
+import com.fosung.demo.service.SysClientDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -25,6 +26,10 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private SysClientDetailService sysClientDetailService;
+
+
     @Override
     public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
         security.allowFormAuthenticationForClients();
@@ -35,7 +40,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 
         String finalSecret = "{bcrypt}"+new BCryptPasswordEncoder().encode("123456");
 
-        clients.inMemory()
+        /*clients.inMemory()
                 .withClient("client_1")
                 .resourceIds(SsoConstant.DEMO_RESOURCE_ID)
                 .authorizedGrantTypes("client_credentials","refresh_token","authorization_code")
@@ -49,8 +54,9 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
                 .authorizedGrantTypes("password", "refresh_token")
                 .scopes("select")
                 .authorities("oauth2")
-                .secret(finalSecret);
+                .secret(finalSecret);*/
 
+        clients.withClientDetails(sysClientDetailService);
     }
 
     @Override

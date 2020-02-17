@@ -31,4 +31,6 @@ public class SysUserDetailService implements UserDetailsService {
 
         return new User(sysUser.getUsername(), sysUser.getPassword(), authorityList);
     }
+
+
 }
